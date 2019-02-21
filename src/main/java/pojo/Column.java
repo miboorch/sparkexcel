@@ -3,8 +3,6 @@ package pojo;
 
 public class Column implements Comparable<Column>{
 
-    private String asset_id;
-
     private String col_name;
 
     private int col_index;
@@ -37,13 +35,6 @@ public class Column implements Comparable<Column>{
         this.scale = scale;
     }
 
-    public String getAsset_id() {
-		return asset_id;
-	}
-
-	public void setAsset_id(String asset_id) {
-		this.asset_id = asset_id;
-	}
 
 	public String getCol_name() {
         return col_name;

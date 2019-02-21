@@ -22,7 +22,6 @@ import pojo.SheetDetail;
 
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -42,8 +41,13 @@ public class ExcelUtils {
 
     private LinkedList<Row> data;
 
-    public LinkedList<Row> getExcelData(String filePath,StructType schema,Integer start,Integer end,String rid)throws Exception{
+    private List<Column> columns;
+
+    private boolean notPreviewFlag=false;
+
+    public LinkedList<Row> getExcelData(String filePath, StructType schema, Integer start, Integer end, String rid, Integer maxIndex, List<Column> columns)throws Exception{
         this.data = new LinkedList<>();
+        this.notPreviewFlag=true;
         OPCPackage pkg =OPCPackage.open(filePath);
         XSSFReader r = new XSSFReader(pkg);
         StylesTable stylesTable = r.getStylesTable();
@@ -54,20 +58,39 @@ public class ExcelUtils {
         while (it.hasNext()) {
             InputStream sheet = it.next();
             if (Integer.valueOf(rid) == i) {
+                this.arrayLength=maxIndex;
+                this.columns=columns;
                 InputSource sheetSource = new InputSource(sheet);
                 parser.parse(sheetSource);
-                if (schema==null){
-                    LinkedList<pojo.Column> columns = null;
-                    if (CollectionUtils.isNotEmpty(data)) {
-                        columns = DatasetUtils.buildColumns(data, maxColIndex);
-                    }
-                    for (Column col : columns) {
-                        schema = schema.add(col.getCol_name(),
-                                SparkDataTypeConvertion.toSparkType(col.getCol_datatype(), col.getScale()), true, Metadata.empty());
-                    }
-                }
                 sheet.close();
                 return data;
+            } else {
+                sheet.close();
+            }
+            i++;
+        }
+        return null;
+    }
+
+    public SheetDetail previewExcelData(String filePath, String rid)throws Exception{
+        this.data = new LinkedList<>();
+        OPCPackage pkg =OPCPackage.open(filePath);
+        XSSFReader r = new XSSFReader(pkg);
+        StylesTable stylesTable = r.getStylesTable();
+        SharedStringsTable sst = r.getSharedStringsTable();
+        XMLReader parser = fetchSheetParser(sst, stylesTable, 0, 6);
+        Iterator<InputStream> it = r.getSheetsData();
+        int i = 1;
+        while (it.hasNext()) {
+            InputStream sheet = it.next();
+            if (Integer.valueOf(rid) == i) {
+                SheetDetail sheetDetail=new SheetDetail();
+                InputSource sheetSource = new InputSource(sheet);
+                parser.parse(sheetSource);
+                sheetDetail.setColumns(DatasetUtils.buildColumns(data, maxColIndex));
+                sheetDetail.setMaxIndex(maxColIndex);
+                sheet.close();
+                return sheetDetail;
             } else {
                 sheet.close();
             }
@@ -168,7 +191,14 @@ public class ExcelUtils {
                             }
                         }
                         try {
-                            data.add(RowFactory.create(line));
+                            if (notPreviewFlag && this.currentRow != 1) {
+                                // 若不存在asset对象则不需要指定
+                                Row row = DatasetUtils.convertLineToRow(line, columns);
+                                data.add(row);
+                            } else {
+                                // 第一行以及预览时，直接create row
+                                data.add(RowFactory.create(line));
+                            }
                         } catch (Exception e) {
                             log.error(e.getMessage(), e);
                         }
@@ -266,13 +296,19 @@ public class ExcelUtils {
                     }
                 }
                 try {
-                    data.add(RowFactory.create(line));
+                    if (notPreviewFlag && this.currentRow != 1) {
+                        // 若不存在asset对象则不需要指定
+                        Row row = DatasetUtils.convertLineToRow(line, columns);
+                        data.add(row);
+                    } else {
+                        // 第一行以及预览时，直接create row
+                        data.add(RowFactory.create(line));
+                    }
                 } catch (Exception e) {
                     log.error(e.getMessage(), e);
                 }
-                data = new LinkedList<>();
-                }
             }
+        }
         /**
          * 判断是否是在读取范围内
          */
@@ -304,5 +340,6 @@ public class ExcelUtils {
                 return result;
             }
         }
+
 
 }

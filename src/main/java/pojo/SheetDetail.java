@@ -15,4 +15,13 @@ public class SheetDetail {
 
     private int maxIndex;
 
+    private List<Object[]> previewData;
+
+    public SheetDetail(String sheetName, int rid) {
+        this.sheetName = sheetName;
+        this.rid=rid;
+    }
+
+    public SheetDetail() {
+    }
 }

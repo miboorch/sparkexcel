@@ -9,8 +9,8 @@
         <module name="sparkexcel" />
       </profile>
     </annotationProcessing>
-    <bytecodeTargetLevel>
-      <module name="sparkexcel" target="1.5" />
+    <bytecodeTargetLevel target="1.8">
+      <module name="sparkexcel" target="1.8" />
     </bytecodeTargetLevel>
   </component>
 </project>
