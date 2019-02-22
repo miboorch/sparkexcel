@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/sparkexcel.iml" filepath="$PROJECT_DIR$/sparkexcel.iml" />
+      <module fileurl="file://$PROJECT_DIR$/spark-excel.iml" filepath="$PROJECT_DIR$/spark-excel.iml" />
     </modules>
   </component>
 </project>
